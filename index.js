@@ -1,3 +1,7 @@
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => res.end('Zyon Bot Online')).listen(PORT);
+console.log(`Servidor web prendido en puerto ${PORT}`);
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const fs = require('fs');
 const pino = require('pino');
