@@ -1,55 +1,42 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
-import { Groq } from 'groq-sdk';
-import qrcode from 'qrcode-terminal'; // lo volvemos a usar solo para pintar
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const fs = require('fs');
+const pino = require('pino');
 
-const GROQ_KEY = process.env.GROQ_KEY;
-const groq = new Groq({ apiKey: GROQ_KEY });
+const PHONE_NUMBER = '51913615315' // TU NUMERO CON CODIGO DE PAIS
 
-async function getIA(texto) {
-    const res = await groq.chat.completions.create({
-        model: "llama-3.1-8b-instant",
-        messages: [{ role: "user", content: `Eres ZYON, bot peruano. Responde corto y con jerga: ${texto}` }]
-    });
-    return res.choices[0].message.content;
-}
-
-async function startBot() {
+async function startZyon() {
     const { version } = await fetchLatestBaileysVersion();
-    const { state, saveCreds } = await useMultiFileAuthState('auth');
+    console.log('Usando WA v:', version);
 
+    if(!fs.existsSync('./auth')) fs.mkdirSync('./auth');
+    
+    if(process.env.SESSION_DATA) {
+        fs.writeFileSync('./auth/creds.json', Buffer.from(process.env.SESSION_DATA, 'base64'));
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState('./auth');
+    
     const sock = makeWASocket({
         version,
-        auth: state
+        auth: state,
+        logger: pino({ level: 'info' }),
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        printQRInTerminal: false // DESACTIVAMOS QR
     });
 
     sock.ev.on('creds.update', saveCreds);
+    
+    // ESTO PIDE EL CODIGO SOLO 1 VEZ
+    if(!sock.authState.creds.registered) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const code = await sock.requestPairingCode(PHONE_NUMBER);
+        console.log('🔥 TU CODIGO DE 8 DIGITOS ES:', code);
+    }
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
-
-        if(qr) {
-            console.log('ESCANEA ESTE QR PARA PRENDER ZYON:');
-            qrcode.generate(qr, { small: true }); // aquí sale el QR
-        }
-
-        if(connection === 'open') {
-            console.log('ZYON PRENDIDO 🔥 24/7');
-        }
-
-        if(connection === 'close') {
-            const shouldReconnect = lastDisconnect.error?.output?.statusCode!== DisconnectReason.loggedOut;
-            if(shouldReconnect) startBot();
-        }
-    });
-
-    sock.ev.on('messages.upsert', async ({messages}) => {
-        const msg = messages[0];
-        if(!msg.message || msg.key.fromMe) return;
-        const texto = msg.message.conversation || '';
-        if(texto.toLowerCase().includes('zyon')){
-            const res = await getIA(texto);
-            await sock.sendMessage(msg.key.remoteJid, {text: res});
-        }
+    sock.ev.on('connection.update', (u) => {
+        console.log('Estado:', u.connection);
+        if(u.connection === 'open') console.log('✅ ZYON BOT CONECTADO EN RENDER ✅');
     });
 }
-startBot();
+
+startZyon();
