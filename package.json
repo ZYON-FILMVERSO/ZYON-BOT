@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.15",
-    "groq-sdk": "^0.4.0"
+    "groq-sdk": "^0.4.0",
+    "qrcode-terminal": "^0.12.0"
   }
 }
