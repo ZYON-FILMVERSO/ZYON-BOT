@@ -11,8 +11,8 @@ services:
         value: 3000
       - key: SESSION_DIR
         value: ./sessions
-      # Agrega aquí las variables que necesite tu IA (ej. API_KEY)
-      # - key: IA_API_URL
-      #   value: https://tu-ia-peruana.com/api
-      # - key: IA_API_KEY
-      #   value: tu_clave_secreta
+      # ====== CONFIGURACIÓN DE TU IA PERUANA ======
+      - key: IA_API_URL
+        value: https://tu-ia-peruana.com/api/chat   # <--- CAMBIAR POR TU URL REAL
+      - key: IA_API_KEY
+        value: tu_clave_secreta_aqui              # <--- CAMBIAR POR TU CLAVE REAL
