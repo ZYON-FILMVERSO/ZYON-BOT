@@ -1,37 +1,44 @@
 // ia-peruana.js
 const axios = require('axios');
 
-// Configuración de tu IA (cambia estos valores o usa variables de entorno)
+// Leer variables de entorno
 const IA_API_URL = process.env.IA_API_URL || 'https://tu-ia-peruana.com/api/chat';
-const IA_API_KEY = process.env.IA_API_KEY || 'tu_clave_secreta';
+const IA_API_KEY = process.env.IA_API_KEY || '';
 
-/**
- * Función principal que recibe el mensaje del usuario y devuelve la respuesta de la IA.
- * @param {string} text - Mensaje del usuario.
- * @param {string} sender - ID del remitente (para contexto).
- * @returns {Promise<string>} - Respuesta de la IA.
- */
 async function handleIncomingMessage(text, sender) {
-    // Si tu IA necesita contexto, puedes almacenar historiales por sender en un Map global.
+    // Verificar si la API Key está configurada
+    if (!IA_API_KEY || IA_API_KEY === 'tu_clave_secreta') {
+        console.warn('[IA] API Key no configurada. Responde con mensaje por defecto.');
+        return '🤖 Hola, soy ZYON. Mi IA peruana aún no está configurada. El administrador debe agregar la variable IA_API_KEY en Render.';
+    }
+
     try {
         const response = await axios.post(IA_API_URL, {
             message: text,
             userId: sender,
-            // Otros campos que requiera tu API
+            // Si tu IA espera otros parámetros, agrégalos aquí
         }, {
             headers: {
                 'Authorization': `Bearer ${IA_API_KEY}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 10000 // 10 segundos máximo
         });
 
-        // Asume que la respuesta viene en response.data.reply
-        // Ajusta según la estructura de tu API
-        return response.data.reply || response.data.message || 'No entendí la respuesta de la IA.';
+        // Ajusta esto según la estructura de respuesta de TU IA
+        const reply = response.data.reply || response.data.message || response.data.response;
+        if (reply) {
+            return reply;
+        } else {
+            return '⚠️ Mi IA peruana respondió, pero no entendí el formato de la respuesta.';
+        }
+
     } catch (error) {
-        console.error('Error llamando a la IA peruana:', error.message);
-        // Si tu IA tiene un modo offline o respuestas por defecto, puedes ponerlas aquí.
-        return '⚠️ Mi IA peruana no está disponible en este momento.';
+        console.error('Error en IA Peruana:', error.message);
+        if (error.response) {
+            console.error('Detalle:', error.response.data);
+        }
+        return '😅 Mi IA peruana está teniendo problemas de conexión. ¡Inténtalo de nuevo!';
     }
 }
 
