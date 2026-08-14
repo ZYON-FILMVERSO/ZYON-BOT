@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: zyon-bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SESSION_DIR
+        value: ./sessions
+      # Agrega aquí las variables que necesite tu IA (ej. API_KEY)
+      # - key: IA_API_URL
+      #   value: https://tu-ia-peruana.com/api
+      # - key: IA_API_KEY
+      #   value: tu_clave_secreta
